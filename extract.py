@@ -26,6 +26,9 @@ def readInChunk(fileHandle, chunkSize):
 if __name__ == "__main__":
 	EXTRACT_SPOT = "extract/"
 
+	if os.path.exists(EXTRACT_SPOT) == False:
+		os.mkdir(EXTRACT_SPOT)
+
 	# Test to see if the file is there and not a directory
 	if os.path.exists(sys.argv[1]) == False or os.path.isfile(sys.argv[1]) == False:
 		print "Given file does not exist or is not a file."
@@ -74,12 +77,15 @@ if __name__ == "__main__":
 
 		print "Dumping " + filename + "..."
 		preSeekSpot = file.tell()
+		print "Preseek:",file.tell()
 
 		# Go to where the file is
-		file.seek(long(fileAddress.encode("hex"), 16))
+		address = fileAddress[::-1]
+		file.seek(long(address.encode("hex"), 16))
+		print "Postseek:",file.tell()
 
-		extractedFile = open(EXTRACT_SPOT + filename, "wb")
-		extractedFile.write(file.read(filesize))
+		extractedFile = open(EXTRACT_SPOT + filename, "w+")
+		data = file.read(filesize)
 		extractedFile.close()
 
 		# Go back to where we were
