@@ -23,29 +23,9 @@ def readInChunk(fileHandle, chunkSize):
 	data = long(data.encode("hex"), 16) #convert it
 	return data
 
-if __name__ == "__main__":
-	EXTRACT_SPOT = "extract/"
-
-	if os.path.exists(EXTRACT_SPOT) == False:
-		os.mkdir(EXTRACT_SPOT)
-
-	# Test to see if the file is there and not a directory
-	if os.path.exists(sys.argv[1]) == False or os.path.isfile(sys.argv[1]) == False:
-		print "Given file does not exist or is not a file."
-		quit(-1)
-
-	# Open the file
-	print "Opening " + sys.argv[1] + "..."
-	file = open(sys.argv[1], "r")
-
-	# Read off the file header:
-	fileHeader = file.read(4)
-	print "File header is " + fileHeader
-	if fileHeader != "LP2C":
-		print "File is not a VFS file. Exiting."
-		quit(-1)
-	else:
-		print "File is a VFS file."
+def recurse(fileHandle, extractSpot):
+	if os.path.exists(extractSpot) == False:
+		os.mkdir(extractSpot)
 
 	totalFolders = readInChunk(file,4)
 	print "Total folders in archive:", totalFolders
@@ -53,6 +33,7 @@ if __name__ == "__main__":
 	totalCurrentFiles = readInChunk(file,4)
 	print "Total files in current folder:", totalCurrentFiles
 
+	# Loop through all files in current folder
 	for i in range(totalCurrentFiles):
 		print "\nFile (" + str(i+1) + "/" + str(totalCurrentFiles) + ")"
 		filenameLength = readInChunk(file,1)
@@ -84,12 +65,44 @@ if __name__ == "__main__":
 		file.seek(long(address.encode("hex"), 16))
 		print "Postseek:",file.tell()
 
-		extractedFile = open(EXTRACT_SPOT + filename, "w+")
+		extractedFile = open(extractSpot + "/" + filename, "w+")
 		data = file.read(filesize)
+		extractedFile.write(data)
 		extractedFile.close()
 
 		# Go back to where we were
 		file.seek(preSeekSpot)
 
+	for i in range(totalFolders):
+		foldernamelength = readInChunk(file,1)
+		print "Foldername length:", foldernamelength
+
+		foldername = file.read(foldernamelength)
+		print "Folder name is: " + foldername
+
+		recurse(file, extractSpot + "/" + foldername)
+
+if __name__ == "__main__":
+	EXTRACT_SPOT = "extract/"
+
+	# Test to see if the file is there and not a directory
+	if os.path.exists(sys.argv[1]) == False or os.path.isfile(sys.argv[1]) == False:
+		print "Given file does not exist or is not a file."
+		quit(-1)
+
+	# Open the file
+	print "Opening " + sys.argv[1] + "..."
+	file = open(sys.argv[1], "r")
+
+	# Read off the file header:
+	fileHeader = file.read(4)
+	print "File header is " + fileHeader
+	if fileHeader != "LP2C":
+		print "File is not a VFS file. Exiting."
+		quit(-1)
+	else:
+		print "File is a VFS file."
+
+	recurse(file, EXTRACT_SPOT)
 
 	file.close()
