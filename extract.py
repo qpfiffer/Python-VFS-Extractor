@@ -78,7 +78,7 @@ if __name__ == "__main__":
 		# Go to where the file is
 		file.seek(long(fileAddress.encode("hex"), 16))
 
-		extractedFile = open(EXTRACT_SPOT + filename, "w")
+		extractedFile = open(EXTRACT_SPOT + filename, "wb")
 		extractedFile.write(file.read(filesize))
 		extractedFile.close()
 
